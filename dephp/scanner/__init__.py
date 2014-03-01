@@ -437,15 +437,13 @@ class LexerSyntaxError(Exception):
         self.value = token.value
         Exception.__init__(self, "unknown token", token)
 
-# TODO: Breaks several other rules, e.g. AT, SEMIC...
-# t_php_WHATEVER = r'.'
-
 def t_ANY_error(t):
     # TODO:
-    #   How do we optionally continue?  You need multiple instances of the
-    #   lexer.
-    # t.lexer.skip(1)
-    raise LexerSyntaxError(t)
+    #   Can we make this optional?
+    t.lexer.skip(1)
+    t.type = "UNKNOWN"
+    t.value = t.value[:1]
+    return t
 
 def peek(lexer):
     try:
