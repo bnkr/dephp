@@ -52,6 +52,7 @@ class DephpRunner(object):
         return 0
 
     def parse(self, settings):
+        from dephp.plyparser import parser
         return 0
 
     def get_parser(self):
