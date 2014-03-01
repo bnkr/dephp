@@ -1,0 +1,16 @@
+# Editor stuff
+*.sw[po]
+# Build
+*.py[co]
+.coverage
+coverage-output
+# setup
+dist/
+build/
+MANIFEST
+# Buildout stuff
+bin/
+eggs/
+develop-eggs/
+parts/
+.installed.cfg
