@@ -52,7 +52,16 @@ class DephpRunner(object):
         return 0
 
     def parse(self, settings):
+        """Create an AST and do some Stuff with it."""
         from dephp.plyparser import parser
+        from dephp.scanner import lexer, LexerSyntaxError
+
+        for name in settings.file:
+            with open(name, 'r') as io:
+                lexer.input(io.read())
+                ast = parser.parse(lexer=lexer)
+                print ast
+
         return 0
 
     def get_parser(self):
