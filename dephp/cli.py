@@ -1,4 +1,4 @@
-import sys, argparse, logging
+import sys, argparse, logging, os
 
 class CliError(Exception):
     """Error suitable for printing on stderr."""
@@ -16,6 +16,30 @@ class DephpRunner(object):
             return 1
 
     def tokenise(self, settings):
+        """Tokeniser which does something with each token."""
+        from dephp.scanner import lexer
+
+        def print_visitor(token):
+            print token
+
+        visitors = {
+            'tokens': print_visitor,
+        }
+
+        visitor = visitors[settings.to]
+
+        def iter_tokens(io):
+            lexer.input(io.read())
+            while True:
+                token = lexer.token()
+                if token is None:
+                    break
+                yield token
+
+        for name in settings.file:
+            with open(name, 'r') as io:
+                map(print_visitor, iter_tokens(io))
+
         return 0
 
     def parse(self, settings):
@@ -30,7 +54,8 @@ class DephpRunner(object):
         parse.add_argument("-t", "--to", help="Output type.")
 
         tokenise = subparsers.add_parser("tokenise")
-        tokenise.add_argument("-t", "--to", help="Output type.")
+        tokenise.add_argument("-t", "--to", help="Output type.",
+                              choices=('tokens',), default="tokens")
 
         for subcommand in (parse, tokenise):
             self._add_shared_arguments(subcommand)
@@ -40,9 +65,17 @@ class DephpRunner(object):
     def _add_shared_arguments(self, parser):
         parser.add_argument("-v", "--verbose", action="store_true")
         parser.add_argument("-d", "--debug", action="store_true")
+        parser.add_argument("file", nargs="+")
 
     def get_settings(self, parser, argv):
         settings = parser.parse_args(argv)
+
+        unreadable = [name for name in settings.file
+                      if not os.access(name, os.R_OK)]
+
+        if unreadable:
+            raise CliError("unreadable file: {0!r}".format(unreadable))
+
         return settings
 
     def setup_logging(self, settings):
