@@ -431,8 +431,21 @@ t_heredocvar_VARIABLE = t_quotedvar_VARIABLE
 t_heredocvar_CURLY_OPEN = t_quotedvar_CURLY_OPEN
 t_heredocvar_DOLLAR_OPEN_CURLY_BRACES = t_quotedvar_DOLLAR_OPEN_CURLY_BRACES
 
+class LexerSyntaxError(Exception):
+    def __init__(self, token):
+        self.line = token.lineno
+        self.value = token.value
+        Exception.__init__(self, "unknown token", token)
+
+# TODO: Breaks several other rules, e.g. AT, SEMIC...
+# t_php_WHATEVER = r'.'
+
 def t_ANY_error(t):
-    raise SyntaxError('illegal character', (None, t.lineno, None, t.value))
+    # TODO:
+    #   How do we optionally continue?  You need multiple instances of the
+    #   lexer.
+    # t.lexer.skip(1)
+    raise LexerSyntaxError(t)
 
 def peek(lexer):
     try:
@@ -516,7 +529,7 @@ class FilteredLexer(object):
 
     __next__ = next
 
-full_lexer = lex.lex()
+full_lexer = lex.lex(debug=0)
 lexer = FilteredLexer(full_lexer)
 
 full_tokens = tokens
