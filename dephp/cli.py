@@ -56,10 +56,15 @@ class DephpRunner(object):
         from dephp.plyparser import parser
         from dephp.scanner import lexer, LexerSyntaxError
 
+        if settings.debug or settings.verbose:
+            logger = logging.getLogger("dephp.parser")
+        else:
+            logger = None
+
         for name in settings.file:
             with open(name, 'r') as io:
                 lexer.input(io.read())
-                ast = parser.parse(lexer=lexer)
+                ast = parser.parse(lexer=lexer, debug=logger)
                 print ast
 
         return 0

@@ -59,6 +59,7 @@ reserved = (
     'REQUIRE_ONCE', 'RETURN', 'STATIC', 'SWITCH', 'UNSET', 'USE', 'VAR',
     'WHILE', 'FINAL', 'INTERFACE', 'IMPLEMENTS', 'PUBLIC', 'PRIVATE',
     'PROTECTED', 'ABSTRACT', 'CLONE', 'TRY', 'CATCH', 'THROW', 'NAMESPACE',
+    'TRAIT', 'GOTO', 'FINALLY', 'CALLABLE', 'INSTEADOF', 'YIELD',
 )
 
 # Not used by parser
@@ -78,12 +79,12 @@ tokens = reserved + unparsed + (
     'PLUS', 'MINUS', 'MUL', 'DIV', 'MOD', 'AND', 'OR', 'NOT', 'XOR', 'SL',
     'SR', 'BOOLEAN_AND', 'BOOLEAN_OR', 'BOOLEAN_NOT', 'IS_SMALLER',
     'IS_GREATER', 'IS_SMALLER_OR_EQUAL', 'IS_GREATER_OR_EQUAL', 'IS_EQUAL',
-    'IS_NOT_EQUAL', 'IS_IDENTICAL', 'IS_NOT_IDENTICAL',
+    'IS_NOT_EQUAL', 'IS_IDENTICAL', 'IS_NOT_IDENTICAL', 'POW',
 
     # Assignment operators
     'EQUALS', 'MUL_EQUAL', 'DIV_EQUAL', 'MOD_EQUAL', 'PLUS_EQUAL',
     'MINUS_EQUAL', 'SL_EQUAL', 'SR_EQUAL', 'AND_EQUAL', 'OR_EQUAL',
-    'XOR_EQUAL', 'CONCAT_EQUAL',
+    'XOR_EQUAL', 'CONCAT_EQUAL', 'POW_EQUAL',
 
     # Increment/decrement
     'INC', 'DEC',
@@ -94,6 +95,7 @@ tokens = reserved + unparsed + (
     # Delimiters
     'LPAREN', 'RPAREN', 'LBRACKET', 'RBRACKET', 'LBRACE', 'RBRACE', 'DOLLAR',
     'COMMA', 'CONCAT', 'QUESTION', 'COLON', 'SEMI', 'AT', 'NS_SEPARATOR',
+    'ELLIPSIS',
 
     # Casts
     'ARRAY_CAST', 'BOOL_CAST', 'DOUBLE_CAST', 'INT_CAST', 'OBJECT_CAST',
@@ -103,12 +105,12 @@ tokens = reserved + unparsed + (
     'INLINE_HTML',
 
     # Identifiers and reserved words
-    'DIR', 'FILE', 'LINE', 'FUNC_C', 'CLASS_C', 'METHOD_C', 'NS_C',
+    'DIR', 'FILE', 'LINE', 'FUNC_C', 'CLASS_C', 'METHOD_C', 'NS_C', 'TRAIT_C',
     'LOGICAL_AND', 'LOGICAL_OR', 'LOGICAL_XOR',
     'HALT_COMPILER',
     'STRING', 'VARIABLE',
     'LNUMBER', 'DNUMBER', 'NUM_STRING',
-    'CONSTANT_ENCAPSED_STRING', 'ENCAPSED_AND_WHITESPACE', 'QUOTE',
+    'CONSTANT_ENCAPSED_STRING', 'ENCAPSED_AND_WHITESPACE', 'QUOTE', 'BACKTICK',
     'DOLLAR_OPEN_CURLY_BRACES', 'STRING_VARNAME', 'CURLY_OPEN',
 
     # Heredocs
@@ -125,6 +127,7 @@ def t_php_WHITESPACE(t):
 t_php_PLUS                = r'\+'
 t_php_MINUS               = r'-'
 t_php_MUL                 = r'\*'
+t_php_POW                 = r'\*\*'
 t_php_DIV                 = r'/'
 t_php_MOD                 = r'%'
 t_php_AND                 = r'&'
@@ -148,6 +151,7 @@ t_php_IS_NOT_IDENTICAL    = r'!=='
 # Assignment operators
 t_php_EQUALS               = r'='
 t_php_MUL_EQUAL            = r'\*='
+t_php_POW_EQUAL            = r'\*\*='
 t_php_DIV_EQUAL            = r'/='
 t_php_MOD_EQUAL            = r'%='
 t_php_PLUS_EQUAL           = r'\+='
@@ -205,6 +209,8 @@ def t_php_RBRACE(t):
     t.lexer.pop_state()
     return t
 
+t_php_ELLIPSIS             = r'\.\.\.'
+
 # Casts
 t_php_ARRAY_CAST           = r'\([ \t]*[Aa][Rr][Rr][Aa][Yy][ \t]*\)'
 t_php_BOOL_CAST            = r'\([ \t]*[Bb][Oo][Oo][Ll]([Ee][Aa][Nn])?[ \t]*\)'
@@ -256,6 +262,7 @@ reserved_map = {
     '__CLASS__':       'CLASS_C',
     '__METHOD__':      'METHOD_C',
     '__NAMESPACE__':   'NS_C',
+    '__TRAIT__':       'TRAIT_C',
 
     'AND':             'LOGICAL_AND',
     'OR':              'LOGICAL_OR',
@@ -293,6 +300,10 @@ def t_php_LNUMBER(t):
 def t_php_CONSTANT_ENCAPSED_STRING(t):
     r"'([^\\']|\\(.|\n))*'"
     t.lexer.lineno += t.value.count("\n")
+    return t
+
+def t_php_BACKTICK(t):
+    r'`'
     return t
 
 def t_php_QUOTE(t):
@@ -532,3 +543,18 @@ lexer = FilteredLexer(full_lexer)
 
 full_tokens = tokens
 tokens = filter(lambda token: token not in unparsed, tokens)
+
+def scan_string(string):
+    """Return a list of tokens scanned from a string."""
+    def iter_tokens(lexer):
+        while True:
+            token = lexer.token()
+            if token is None:
+                break
+            else:
+                yield token
+
+    lexer.lexer.begin('INITIAL')
+    lexer.input(string)
+
+    return list(iter_tokens(lexer))
