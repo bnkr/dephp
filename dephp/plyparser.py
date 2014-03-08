@@ -78,7 +78,6 @@ def p_namespace_name(p):
 #     | T_USE T_CONST use_const_declarations ';'       { zend_verify_namespace(TSRMLS_C); }
 #     | constant_declaration ';'       { zend_verify_namespace(TSRMLS_C); }
 # ;
-
 def p_top_statement(p):
     '''top_statement : statement
                      | function_declaration_statement
@@ -1276,7 +1275,6 @@ def p_new_expr(p):
 
 def p_expr_without_variable(p):
     '''expr_without_variable : LIST LPAREN assignment_list RPAREN EQUALS expr
-                             | LPAREN new_expr RPAREN instance_call
                              | expr QUESTION expr COLON expr
                              | expr QUESTION COLON expr
                              | BACKTICK backticks_expr BACKTICK
@@ -1284,14 +1282,21 @@ def p_expr_without_variable(p):
                              | function is_reference LPAREN parameter_list RPAREN lexical_vars LBRACE inner_statement_list RBRACE
                              | STATIC function is_reference LPAREN parameter_list RPAREN lexical_vars LBRACE inner_statement_list RBRACE
                              '''
+def p_expr_without_variable_conflictey_brackets(p):
+    '''expr_without_variable : parenthesis_expr
+                             | LPAREN new_expr RPAREN instance_call
+                             | new_expr
+                             '''
+    # Undocumented shift/reduce here is present in php's grammar as well.  We
+    # can solve it py putting instance_call after parenthesis_expr but I think
+    # that would by very broad.
 
 def p_expr_without_variable_identity(p):
     '''expr_without_variable : scalar
                              | combined_scalar_offset
                              | combined_scalar
-                             | parenthesis_expr
                              | internal_functions_in_yacc
-                             | new_expr'''
+                             '''
     p[0] = p[1]
 
 def p_expr_without_variable_assignment(p):
