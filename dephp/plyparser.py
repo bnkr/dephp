@@ -486,7 +486,7 @@ def p_unset_variable(p):
 #     '{' inner_statement_list '}' { zend_do_end_function_declaration(&$1 TSRMLS_CC); }
 # ;
 def p_function_declaration_statement(p):
-    'function_declaration_statement : FUNCTION is_reference STRING LPAREN parameter_list RPAREN LBRACE inner_statement_list RBRACE'
+    'function_declaration_statement : function is_reference STRING LPAREN parameter_list RPAREN LBRACE inner_statement_list RBRACE'
     p[0] = ast.Function(p[3], p[5], p[8], p[2], lineno=p.lineno(1))
 
 # class_declaration_statement:
