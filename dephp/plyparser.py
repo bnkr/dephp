@@ -1742,16 +1742,16 @@ def p_static_operation(p):
                         '''
 
 # scalar:
-#     T_STRING_VARNAME    { $$ = $1; }
-#   |  class_name_scalar  { $$ = $1; }
-#   |  class_constant    { $$ = $1; }
-#   |  namespace_name  { zend_do_fetch_constant(&$$, NULL, &$1, ZEND_RT, 1 TSRMLS_CC); }
-#   |  T_NAMESPACE T_NS_SEPARATOR namespace_name { $$.op_type = IS_CONST; ZVAL_EMPTY_STRING(&$$.u.constant);  zend_do_build_namespace_name(&$$, &$$, &$3 TSRMLS_CC); $3 = $$; zend_do_fetch_constant(&$$, NULL, &$3, ZEND_RT, 0 TSRMLS_CC); }
-#   |  T_NS_SEPARATOR namespace_name { char *tmp = estrndup(Z_STRVAL($2.u.constant), Z_STRLEN($2.u.constant)+1); memcpy(&(tmp[1]), Z_STRVAL($2.u.constant), Z_STRLEN($2.u.constant)+1); tmp[0] = '\\'; efree(Z_STRVAL($2.u.constant)); Z_STRVAL($2.u.constant) = tmp; ++Z_STRLEN($2.u.constant); zend_do_fetch_constant(&$$, NULL, &$2, ZEND_RT, 0 TSRMLS_CC); }
-#   |  common_scalar      { $$ = $1; }
-#   |  '"' encaps_list '"'   { $$ = $2; }
-#   |  T_START_HEREDOC encaps_list T_END_HEREDOC { $$ = $2; }
-#   |  T_CLASS_C        { if (Z_TYPE($1.u.constant) == IS_CONSTANT) {zend_do_fetch_constant(&$$, NULL, &$1, ZEND_RT, 1 TSRMLS_CC);} else {$$ = $1;} }
+#     T_STRING_VARNAME
+#   |  class_name_scalar
+#   |  class_constant
+#   |  namespace_name
+#   |  T_NAMESPACE T_NS_SEPARATOR namespace_name
+#   |  T_NS_SEPARATOR namespace_name
+#   |  common_scalar
+#   |  '"' encaps_list '"'
+#   |  T_START_HEREDOC encaps_list T_END_HEREDOC
+#   |  T_CLASS_C
 # ;
 def p_scalar_identity(p):
     '''scalar : STRING_VARNAME
@@ -1767,12 +1767,19 @@ def p_scalar_magic(p):
     # Bit unclear why this isn't in common scalar...
     p[0] = ast.MagicConstant(p[1].upper(), None, lineno=p.lineno(1))
 
-def p_scalar_other(p):
+def p_scalar_string(p):
+    '''scalar : QUOTE encaps_list QUOTE
+              | START_HEREDOC encaps_list END_HEREDOC'''
+    p[0] = p[2]
+
+def p_scalar_namespaced_var(p):
     '''scalar : NAMESPACE NS_SEPARATOR namespace_name
               | NS_SEPARATOR namespace_name
-              | QUOTE encaps_list QUOTE
-              | START_HEREDOC encaps_list END_HEREDOC
               '''
+    if len(p) == 4:
+        p[0] = p[1].value + "\\" + p[3]
+    else:
+        p[0] = "\\" + p[2]
 
 def p_scalar_double_quote_string(p):
     'scalar : QUOTE ENCAPSED_AND_WHITESPACE QUOTE'
@@ -2174,14 +2181,13 @@ def p_non_empty_array_pair_list_pair(p):
         p[0] = [ast.ArrayElement(p[1], p[3], False, lineno=p.lineno(2))]
 
 # encaps_list:
-#     encaps_list encaps_var { zend_do_end_variable_parse(&$2, BP_VAR_R, 0 TSRMLS_CC);  zend_do_add_variable(&$$, &$1, &$2 TSRMLS_CC); }
-#   |  encaps_list T_ENCAPSED_AND_WHITESPACE  { zend_do_add_string(&$$, &$1, &$2 TSRMLS_CC); }
-#   |  encaps_var { zend_do_end_variable_parse(&$1, BP_VAR_R, 0 TSRMLS_CC); zend_do_add_variable(&$$, NULL, &$1 TSRMLS_CC); }
-#   |  T_ENCAPSED_AND_WHITESPACE encaps_var  { zend_do_add_string(&$$, NULL, &$1 TSRMLS_CC); zend_do_end_variable_parse(&$2, BP_VAR_R, 0 TSRMLS_CC); zend_do_add_variable(&$$, &$$, &$2 TSRMLS_CC); }
+#     encaps_list encaps_var
+#   |  encaps_list T_ENCAPSED_AND_WHITESPACE
+#   |  encaps_var
+#   |  T_ENCAPSED_AND_WHITESPACE encaps_var
 # ;
 def p_encaps_list(p):
     '''encaps_list : encaps_list encaps_var'''
-    # empty is removed
     if len(p) == 3:
         if p[1] == '':
             p[0] = p[2]
@@ -2200,16 +2206,15 @@ def p_encaps_list_string(p):
 
 def p_encaps_list_others(p):
     '''encaps_list : encaps_var
-                   | ENCAPSED_AND_WHITESPACE encaps_list'''
-    # not sure what these are all about
+                   | ENCAPSED_AND_WHITESPACE encaps_var'''
 
 # encaps_var:
-#     T_VARIABLE { zend_do_begin_variable_parse(TSRMLS_C); fetch_simple_variable(&$$, &$1, 1 TSRMLS_CC); }
-#   |  T_VARIABLE '[' { zend_do_begin_variable_parse(TSRMLS_C); } encaps_var_offset ']'  { fetch_array_begin(&$$, &$1, &$4 TSRMLS_CC); }
-#   |  T_VARIABLE T_OBJECT_OPERATOR T_STRING { zend_do_begin_variable_parse(TSRMLS_C); fetch_simple_variable(&$2, &$1, 1 TSRMLS_CC); zend_do_fetch_property(&$$, &$2, &$3 TSRMLS_CC); }
-#   |  T_DOLLAR_OPEN_CURLY_BRACES expr '}' { zend_do_begin_variable_parse(TSRMLS_C);  fetch_simple_variable(&$$, &$2, 1 TSRMLS_CC); }
-#   |  T_DOLLAR_OPEN_CURLY_BRACES T_STRING_VARNAME '[' expr ']' '}' { zend_do_begin_variable_parse(TSRMLS_C);  fetch_array_begin(&$$, &$2, &$4 TSRMLS_CC); }
-#   |  T_CURLY_OPEN variable '}' { $$ = $2; }
+#     T_VARIABLE
+#   |  T_VARIABLE '['  encaps_var_offset ']'
+#   |  T_VARIABLE T_OBJECT_OPERATOR T_STRING
+#   |  T_DOLLAR_OPEN_CURLY_BRACES expr '}'
+#   |  T_DOLLAR_OPEN_CURLY_BRACES T_STRING_VARNAME '[' expr ']' '}'
+#   |  T_CURLY_OPEN variable '}'
 # ;
 def p_encaps_var(p):
     'encaps_var : VARIABLE'

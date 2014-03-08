@@ -31,3 +31,14 @@ class ExpressionTestCase(TestCase):
         parsed = parse_string('<?php $data = \'a\';')
         expected = [ast.AssignOp(ast.Variable('$data'), '=', 'a')]
         self.assertEquals(expected, parsed)
+
+    def test_parenthesis_new(self):
+        """This tends to get shift/reduce-ey with other bracketted
+        expressions."""
+        parsed = parse_string('<?php (new stdclass)->prop;')
+        expected = [ast.AssignOp(ast.Variable('$data'), '=', 'a')]
+        self.assertEquals(expected, parsed)
+
+        parsed = parse_string('<?php (new stdclass(1, 2))->prop;')
+        expected = [ast.AssignOp(ast.Variable('$data'), '=', 'a')]
+        self.assertEquals(expected, parsed)
