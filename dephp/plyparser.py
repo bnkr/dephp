@@ -11,6 +11,7 @@ precedence = (
     ('left', 'LOGICAL_XOR'),
     ('left', 'LOGICAL_AND'),
     ('right', 'PRINT'),
+    ('right', 'YIELD'),
     ('left', 'EQUALS', 'PLUS_EQUAL', 'MINUS_EQUAL', 'MUL_EQUAL', 'DIV_EQUAL',
         'CONCAT_EQUAL', 'MOD_EQUAL', 'AND_EQUAL', 'OR_EQUAL', 'XOR_EQUAL',
         'SL_EQUAL', 'SR_EQUAL', 'POW_EQUAL'),
