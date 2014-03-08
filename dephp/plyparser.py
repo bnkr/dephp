@@ -1706,43 +1706,11 @@ def p_static_scalar_value(p):
                            | CLASS_C
                            | static_operation'''
 
-# static_operation:
-#     static_scalar_value '+' static_scalar_value { $$.u.ast = zend_ast_create_binary(ZEND_ADD, $1.u.ast, $3.u.ast); }
-#   |  static_scalar_value '-' static_scalar_value { $$.u.ast = zend_ast_create_binary(ZEND_SUB, $1.u.ast, $3.u.ast); }
-#   |  static_scalar_value '*' static_scalar_value { $$.u.ast = zend_ast_create_binary(ZEND_MUL, $1.u.ast, $3.u.ast); }
-#   |  static_scalar_value '/' static_scalar_value { $$.u.ast = zend_ast_create_binary(ZEND_DIV, $1.u.ast, $3.u.ast); }
-#   |  static_scalar_value '%' static_scalar_value { $$.u.ast = zend_ast_create_binary(ZEND_MOD, $1.u.ast, $3.u.ast); }
-#   |  '!' static_scalar_value { $$.u.ast = zend_ast_create_unary(ZEND_BOOL_NOT, $2.u.ast); }
-#   |  '~' static_scalar_value { $$.u.ast = zend_ast_create_unary(ZEND_BW_NOT, $2.u.ast); }
-#   |  static_scalar_value '|' static_scalar_value { $$.u.ast = zend_ast_create_binary(ZEND_BW_OR, $1.u.ast, $3.u.ast); }
-#   |  static_scalar_value '&' static_scalar_value { $$.u.ast = zend_ast_create_binary(ZEND_BW_AND, $1.u.ast, $3.u.ast); }
-#   |  static_scalar_value '^' static_scalar_value { $$.u.ast = zend_ast_create_binary(ZEND_BW_XOR, $1.u.ast, $3.u.ast); }
-#   |  static_scalar_value T_SL static_scalar_value { $$.u.ast = zend_ast_create_binary(ZEND_SL, $1.u.ast, $3.u.ast); }
-#   |  static_scalar_value T_SR static_scalar_value { $$.u.ast = zend_ast_create_binary(ZEND_SR, $1.u.ast, $3.u.ast); }
-#   |  static_scalar_value '.' static_scalar_value { $$.u.ast = zend_ast_create_binary(ZEND_CONCAT, $1.u.ast, $3.u.ast); }
-#   |  static_scalar_value T_LOGICAL_XOR static_scalar_value { $$.u.ast = zend_ast_create_binary(ZEND_BOOL_XOR, $1.u.ast, $3.u.ast); }
-#   |  static_scalar_value T_LOGICAL_AND static_scalar_value { $$.u.ast = zend_ast_create_binary(ZEND_BOOL_AND, $1.u.ast, $3.u.ast); }
-#   |  static_scalar_value T_LOGICAL_OR static_scalar_value { $$.u.ast = zend_ast_create_binary(ZEND_BOOL_OR, $1.u.ast, $3.u.ast); }
-#   |  static_scalar_value T_BOOLEAN_AND static_scalar_value { $$.u.ast = zend_ast_create_binary(ZEND_BOOL_AND, $1.u.ast, $3.u.ast); }
-#   |  static_scalar_value T_BOOLEAN_OR static_scalar_value { $$.u.ast = zend_ast_create_binary(ZEND_BOOL_OR, $1.u.ast, $3.u.ast); }
-#   |  static_scalar_value T_IS_IDENTICAL static_scalar_value { $$.u.ast = zend_ast_create_binary(ZEND_IS_IDENTICAL, $1.u.ast, $3.u.ast); }
-#   |  static_scalar_value T_IS_NOT_IDENTICAL static_scalar_value { $$.u.ast = zend_ast_create_binary(ZEND_IS_NOT_IDENTICAL, $1.u.ast, $3.u.ast); }
-#   |  static_scalar_value T_IS_EQUAL static_scalar_value { $$.u.ast = zend_ast_create_binary(ZEND_IS_EQUAL, $1.u.ast, $3.u.ast); }
-#   |  static_scalar_value T_IS_NOT_EQUAL static_scalar_value { $$.u.ast = zend_ast_create_binary(ZEND_IS_NOT_EQUAL, $1.u.ast, $3.u.ast); }
-#   |  static_scalar_value '<' static_scalar_value { $$.u.ast = zend_ast_create_binary(ZEND_IS_SMALLER, $1.u.ast, $3.u.ast); }
-#   |  static_scalar_value '>' static_scalar_value { $$.u.ast = zend_ast_create_binary(ZEND_IS_SMALLER, $3.u.ast, $1.u.ast); }
-#   |  static_scalar_value T_IS_SMALLER_OR_EQUAL static_scalar_value { $$.u.ast = zend_ast_create_binary(ZEND_IS_SMALLER_OR_EQUAL, $1.u.ast, $3.u.ast); }
-#   |  static_scalar_value T_IS_GREATER_OR_EQUAL static_scalar_value { $$.u.ast = zend_ast_create_binary(ZEND_IS_SMALLER_OR_EQUAL, $3.u.ast, $1.u.ast); }
-#   |  static_scalar_value '?' ':' static_scalar_value { $$.u.ast = zend_ast_create_ternary(ZEND_SELECT, $1.u.ast, NULL, $4.u.ast); }
-#   |  static_scalar_value '?' static_scalar_value ':' static_scalar_value { $$.u.ast = zend_ast_create_ternary(ZEND_SELECT, $1.u.ast, $3.u.ast, $5.u.ast); }
-#   |  '+' static_scalar_value { $$.u.ast = zend_ast_create_unary(ZEND_UNARY_PLUS, $2.u.ast); }
-#   |  '-' static_scalar_value { $$.u.ast = zend_ast_create_unary(ZEND_UNARY_MINUS, $2.u.ast); }
-#   |  '(' static_scalar_value ')' { $$ = $2; }
-# ;
 def p_static_operation(p):
     '''static_operation : static_scalar_value PLUS static_scalar_value
                         | static_scalar_value MINUS static_scalar_value
                         | static_scalar_value MUL static_scalar_value
+                        | static_scalar_value POW static_scalar_value
                         | static_scalar_value DIV static_scalar_value
                         | static_scalar_value MOD static_scalar_value
                         | BOOLEAN_NOT static_scalar_value
