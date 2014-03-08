@@ -1,8 +1,18 @@
-import logging
+import logging, contextlib
 from unittest import TestCase
 from dephp.pyparser import php_program
 from dephp.scanner import lexer, scan_string
 from dephp.plyparser import parser, parse_string
+from dephp import phpast as ast
+
+@contextlib.contextmanager
+def log_level(level):
+    old = logging.getLogger().getEffectiveLevel()
+    try:
+        logging.getLogger().setLevel(level)
+        yield
+    finally:
+        logging.getLogger().setLevel(old)
 
 class PyparsingParserTestCase(TestCase):
     def test_emty_string_is_empty(self):
@@ -28,8 +38,11 @@ class ExpressionTestCase(TestCase):
                     'QUOTE', 'SEMI']
         self.assertEquals(expected, [token.type for token in tokens])
 
-        ast = parse_string('<?php $data = "a";')
-        self.assertEquals([], ast)
+        with log_level(logging.INFO):
+            parsed = parse_string('<?php $data = "a";')
+
+        expected = [ast.AssignOp(ast.Variable('$data'), '=', 'a')]
+        self.assertEquals(expected, parsed)
 
     def test_assign_with_single_quotes(self):
         ast = parse_string('<?php $data = \'a\';')

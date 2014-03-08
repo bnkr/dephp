@@ -43,10 +43,7 @@ class Node(object):
         assert len(self.fields) == len(args), \
             '%s takes %d arguments' % (self.__class__.__name__,
                                        len(self.fields))
-        try:
-            self.lineno = kwargs['lineno']
-        except KeyError:
-            self.lineno = None
+        self.lineno = kwargs.get('lineno', None)
         for i, field in enumerate(self.fields):
             setattr(self, field, args[i])
 
@@ -170,6 +167,7 @@ UseDeclarations = node('UseDeclarations', ['nodes'])
 UseDeclaration = node('UseDeclaration', ['name', 'alias'])
 ConstantDeclarations = node('ConstantDeclarations', ['nodes'])
 ConstantDeclaration = node('ConstantDeclaration', ['name', 'initial'])
+HaltCompiler = node('HaltCompiler', [])
 
 def resolve_magic_constants(nodes):
     current = {}

@@ -79,11 +79,12 @@ def p_top_statement(p):
     '''top_statement : statement
                      | function_declaration_statement
                      | class_declaration_statement
-                     | HALT_COMPILER LPAREN RPAREN SEMI'''
-    if len(p) == 2:
-        p[0] = p[1]
-    else:
-        raise Exception("wat")
+                     | constant_declaration SEMI'''
+    p[0] = p[1]
+
+def p_top_statement_halt(p):
+    '''top_statement : HALT_COMPILER LPAREN RPAREN SEMI'''
+    p[0] = ast.HaltCompiler(lineno=p.lineno(1))
 
 def p_top_statement_namespace(p):
     '''top_statement : NAMESPACE namespace_name SEMI
@@ -103,21 +104,9 @@ def p_top_statement_use(p):
     # The zend parser does extra validation for each of these types of use
     # statement.  Since it's the same syntax we pretend it's the same thing for
     # now.  Phply leaves these out (presumably because it's a bit out of date).
-    p[0] = ast.UseDeclarations(p[2], lineno=p.lineno(1))
+    use = len(p) == 4 and p[2] or p[3]
+    p[0] = ast.UseDeclarations(use, lineno=p.lineno(1))
 
-def p_top_statement_constant(p):
-    'top_statement : constant_declaration'
-    # Used to be:
-    #
-    #   'top_statement : CONST constant_declarations SEMI'
-    #
-    # TODO:
-    #   This probably won't work since the code isn't adapted very well.
-    p[0] = ast.ConstantDeclarations(p[1], lineno=p.lineno(1))
-
-# use_declarations:
-#     use_declarations ',' use_declaration | use_declaration
-# ;
 def p_use_declarations(p):
     '''use_declarations : use_declarations COMMA use_declaration
                         | use_declaration'''
@@ -126,16 +115,10 @@ def p_use_declarations(p):
     else:
         p[0] = [p[1]]
 
-# use_declaration:
-#     namespace_name       { zend_do_use(&$1, NULL, 0 TSRMLS_CC); }
-#   |  namespace_name T_AS T_STRING  { zend_do_use(&$1, &$3, 0 TSRMLS_CC); }
-#   |  T_NS_SEPARATOR namespace_name { zend_do_use(&$2, NULL, 1 TSRMLS_CC); }
-#   |  T_NS_SEPARATOR namespace_name T_AS T_STRING { zend_do_use(&$2, &$4, 1 TSRMLS_CC); }
-# ;
 def p_use_declaration(p):
     '''use_declaration : namespace_name
-                       | NS_SEPARATOR namespace_name
                        | namespace_name AS STRING
+                       | NS_SEPARATOR namespace_name
                        | NS_SEPARATOR namespace_name AS STRING'''
     if len(p) == 2:
         p[0] = ast.UseDeclaration(p[1], None, lineno=p.lineno(1))
@@ -1374,22 +1357,7 @@ def p_new_expr(p):
 # ;
 def p_expr_without_variable(p):
     '''expr_without_variable : LIST LPAREN assignment_list RPAREN EQUALS expr
-                             | variable EQUALS expr
-                             | variable EQUALS AND variable
-                             | variable EQUALS AND NEW class_name_reference ctor_arguments
                              | CLONE expr
-                             | variable PLUS_EQUAL expr
-                             | variable MINUS_EQUAL expr
-                             | variable MUL_EQUAL expr
-                             | variable POW_EQUAL expr
-                             | variable DIV_EQUAL expr
-                             | variable CONCAT_EQUAL expr
-                             | variable MOD_EQUAL expr
-                             | variable AND_EQUAL expr
-                             | variable OR_EQUAL expr
-                             | variable XOR_EQUAL expr
-                             | variable SL_EQUAL expr
-                             | variable SR_EQUAL expr
                              | rw_variable INC
                              | INC rw_variable
                              | rw_variable DEC
@@ -1425,7 +1393,6 @@ def p_expr_without_variable(p):
                              | expr IS_GREATER_OR_EQUAL expr
                              | expr INSTANCEOF class_name_reference
                              | parenthesis_expr
-                             | new_expr
                              | LPAREN new_expr RPAREN instance_call
                              | expr QUESTION expr COLON expr
                              | expr QUESTION COLON expr
@@ -1439,15 +1406,44 @@ def p_expr_without_variable(p):
                              | UNSET_CAST expr
                              | EXIT exit_expr
                              | AT expr
-                             | scalar
-                             | combined_scalar_offset
-                             | combined_scalar
                              | BACKTICK backticks_expr BACKTICK
                              | PRINT expr
                              | YIELD
                              | function is_reference LPAREN parameter_list RPAREN lexical_vars LBRACE inner_statement_list RBRACE
                              | STATIC function is_reference LPAREN parameter_list RPAREN lexical_vars LBRACE inner_statement_list RBRACE
                              '''
+
+def p_expr_without_variable_identity(p):
+    '''expr_without_variable : scalar
+                             | combined_scalar_offset
+                             | combined_scalar
+                             | new_expr'''
+    p[0] = p[1]
+
+def p_expr_without_variable_assignment(p):
+    '''expr_without_variable : variable EQUALS expr
+                             | variable PLUS_EQUAL expr
+                             | variable MINUS_EQUAL expr
+                             | variable MUL_EQUAL expr
+                             | variable POW_EQUAL expr
+                             | variable DIV_EQUAL expr
+                             | variable CONCAT_EQUAL expr
+                             | variable MOD_EQUAL expr
+                             | variable AND_EQUAL expr
+                             | variable OR_EQUAL expr
+                             | variable XOR_EQUAL expr
+                             | variable SL_EQUAL expr
+                             | variable SR_EQUAL expr'''
+    p[0] = ast.AssignOp(p[1], p[2], p[3])
+
+def p_expr_without_variable_reference_assignment(p):
+    '''expr_without_variable : variable EQUALS AND variable
+                             | variable EQUALS AND NEW class_name_reference ctor_arguments'''
+    if len(p) == 4:
+        p[0] = ast.Assignment(p[1], p[4], is_ref=True)
+    else:
+        # This is deprecated anyway...
+        p[0] = ast.Assignment(p[1], "new object", is_ref=True)
 
 # yield_expr:
 #     T_YIELD expr_without_variable { zend_do_yield(&$$, &$2, NULL, 0 TSRMLS_CC); }
@@ -1876,6 +1872,7 @@ def p_scalar_double_quote_string(p):
     # to reduce encaps_list like that.  (If you attempt to do it there you get
     # problems with backtick expressions.  Phply doesn't support backticks so
     # that's probably why it doesn't solve this problem.
+    p[0] = p[2]
 
 # static_array_pair_list:
 #     /* empty */ { $$.op_type = IS_CONST; INIT_PZVAL(&$$.u.constant); array_init(&$$.u.constant); }
@@ -1898,7 +1895,6 @@ def p_possible_comma(p):
     '''possible_comma : empty
                       | COMMA'''
     pass
-
 
 # non_empty_static_array_pair_list:
 #     non_empty_static_array_pair_list ',' static_scalar T_DOUBLE_ARROW static_scalar  { zend_do_add_static_array_element(&$$, &$3, &$5); }
