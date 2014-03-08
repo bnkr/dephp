@@ -1266,148 +1266,16 @@ def p_instance_call(p):
     '''instance_call : empty
                      | chaining_instance_call'''
 
-# new_expr:
-#     T_NEW class_name_reference { zend_do_extended_fcall_begin(TSRMLS_C); zend_do_begin_new_object(&$1, &$2 TSRMLS_CC); } ctor_arguments { zend_do_end_new_object(&$$, &$1 TSRMLS_CC); zend_do_extended_fcall_end(TSRMLS_C);}
-# ;
 def p_new_expr(p):
     '''new_expr : NEW class_name_reference ctor_arguments'''
+    p[0] = ast.New(p[2], p[3], lineno=p.lineno(1))
 
-# expr_without_variable:
-#     T_LIST '(' { zend_do_list_init(TSRMLS_C); } assignment_list ')' '=' expr { zend_do_list_end(&$$, &$7 TSRMLS_CC); }
-#   |  variable '=' expr    { zend_check_writable_variable(&$1); zend_do_assign(&$$, &$1, &$3 TSRMLS_CC); }
-#   |  variable '=' '&' variable { zend_check_writable_variable(&$1); zend_do_end_variable_parse(&$4, BP_VAR_W, 1 TSRMLS_CC); zend_do_end_variable_parse(&$1, BP_VAR_W, 0 TSRMLS_CC); zend_do_assign_ref(&$$, &$1, &$4 TSRMLS_CC); }
-#   |  variable '=' '&' T_NEW class_name_reference { zend_error(E_DEPRECATED, "Assigning the return value of new by reference is deprecated");  zend_check_writable_variable(&$1); zend_do_extended_fcall_begin(TSRMLS_C); zend_do_begin_new_object(&$4, &$5 TSRMLS_CC); } ctor_arguments { zend_do_end_new_object(&$3, &$4 TSRMLS_CC); zend_do_extended_fcall_end(TSRMLS_C); zend_do_end_variable_parse(&$1, BP_VAR_W, 0 TSRMLS_CC); $3.EA = ZEND_PARSED_NEW; zend_do_assign_ref(&$$, &$1, &$3 TSRMLS_CC); }
-#   |  T_CLONE expr { zend_do_clone(&$$, &$2 TSRMLS_CC); }
-#   |  variable T_PLUS_EQUAL expr   { zend_check_writable_variable(&$1); zend_do_end_variable_parse(&$1, BP_VAR_RW, 0 TSRMLS_CC); zend_do_binary_assign_op(ZEND_ASSIGN_ADD, &$$, &$1, &$3 TSRMLS_CC); }
-#   |  variable T_MINUS_EQUAL expr  { zend_check_writable_variable(&$1); zend_do_end_variable_parse(&$1, BP_VAR_RW, 0 TSRMLS_CC); zend_do_binary_assign_op(ZEND_ASSIGN_SUB, &$$, &$1, &$3 TSRMLS_CC); }
-#   |  variable T_MUL_EQUAL expr    { zend_check_writable_variable(&$1); zend_do_end_variable_parse(&$1, BP_VAR_RW, 0 TSRMLS_CC); zend_do_binary_assign_op(ZEND_ASSIGN_MUL, &$$, &$1, &$3 TSRMLS_CC); }
-#   |  variable T_POW_EQUAL expr    { zend_check_writable_variable(&$1); zend_do_end_variable_parse(&$1, BP_VAR_RW, 0 TSRMLS_CC); zend_do_binary_assign_op(ZEND_ASSIGN_POW, &$$, &$1, &$3 TSRMLS_CC); }
-#   |  variable T_DIV_EQUAL expr    { zend_check_writable_variable(&$1); zend_do_end_variable_parse(&$1, BP_VAR_RW, 0 TSRMLS_CC); zend_do_binary_assign_op(ZEND_ASSIGN_DIV, &$$, &$1, &$3 TSRMLS_CC); }
-#   |  variable T_CONCAT_EQUAL expr  { zend_check_writable_variable(&$1); zend_do_end_variable_parse(&$1, BP_VAR_RW, 0 TSRMLS_CC); zend_do_binary_assign_op(ZEND_ASSIGN_CONCAT, &$$, &$1, &$3 TSRMLS_CC); }
-#   |  variable T_MOD_EQUAL expr    { zend_check_writable_variable(&$1); zend_do_end_variable_parse(&$1, BP_VAR_RW, 0 TSRMLS_CC); zend_do_binary_assign_op(ZEND_ASSIGN_MOD, &$$, &$1, &$3 TSRMLS_CC); }
-#   |  variable T_AND_EQUAL expr    { zend_check_writable_variable(&$1); zend_do_end_variable_parse(&$1, BP_VAR_RW, 0 TSRMLS_CC); zend_do_binary_assign_op(ZEND_ASSIGN_BW_AND, &$$, &$1, &$3 TSRMLS_CC); }
-#   |  variable T_OR_EQUAL expr     { zend_check_writable_variable(&$1); zend_do_end_variable_parse(&$1, BP_VAR_RW, 0 TSRMLS_CC); zend_do_binary_assign_op(ZEND_ASSIGN_BW_OR, &$$, &$1, &$3 TSRMLS_CC); }
-#   |  variable T_XOR_EQUAL expr     { zend_check_writable_variable(&$1); zend_do_end_variable_parse(&$1, BP_VAR_RW, 0 TSRMLS_CC); zend_do_binary_assign_op(ZEND_ASSIGN_BW_XOR, &$$, &$1, &$3 TSRMLS_CC); }
-#   |  variable T_SL_EQUAL expr  { zend_check_writable_variable(&$1); zend_do_end_variable_parse(&$1, BP_VAR_RW, 0 TSRMLS_CC); zend_do_binary_assign_op(ZEND_ASSIGN_SL, &$$, &$1, &$3 TSRMLS_CC); }
-#   |  variable T_SR_EQUAL expr  { zend_check_writable_variable(&$1); zend_do_end_variable_parse(&$1, BP_VAR_RW, 0 TSRMLS_CC); zend_do_binary_assign_op(ZEND_ASSIGN_SR, &$$, &$1, &$3 TSRMLS_CC); }
-#   |  rw_variable T_INC { zend_do_post_incdec(&$$, &$1, ZEND_POST_INC TSRMLS_CC); }
-#   |  T_INC rw_variable { zend_do_pre_incdec(&$$, &$2, ZEND_PRE_INC TSRMLS_CC); }
-#   |  rw_variable T_DEC { zend_do_post_incdec(&$$, &$1, ZEND_POST_DEC TSRMLS_CC); }
-#   |  T_DEC rw_variable { zend_do_pre_incdec(&$$, &$2, ZEND_PRE_DEC TSRMLS_CC); }
-#   |  expr T_BOOLEAN_OR { zend_do_boolean_or_begin(&$1, &$2 TSRMLS_CC); } expr { zend_do_boolean_or_end(&$$, &$1, &$4, &$2 TSRMLS_CC); }
-#   |  expr T_BOOLEAN_AND { zend_do_boolean_and_begin(&$1, &$2 TSRMLS_CC); } expr { zend_do_boolean_and_end(&$$, &$1, &$4, &$2 TSRMLS_CC); }
-#   |  expr T_LOGICAL_OR { zend_do_boolean_or_begin(&$1, &$2 TSRMLS_CC); } expr { zend_do_boolean_or_end(&$$, &$1, &$4, &$2 TSRMLS_CC); }
-#   |  expr T_LOGICAL_AND { zend_do_boolean_and_begin(&$1, &$2 TSRMLS_CC); } expr { zend_do_boolean_and_end(&$$, &$1, &$4, &$2 TSRMLS_CC); }
-#   |  expr T_LOGICAL_XOR expr { zend_do_binary_op(ZEND_BOOL_XOR, &$$, &$1, &$3 TSRMLS_CC); }
-#   |  expr '|' expr  { zend_do_binary_op(ZEND_BW_OR, &$$, &$1, &$3 TSRMLS_CC); }
-#   |  expr '&' expr  { zend_do_binary_op(ZEND_BW_AND, &$$, &$1, &$3 TSRMLS_CC); }
-#   |  expr '^' expr  { zend_do_binary_op(ZEND_BW_XOR, &$$, &$1, &$3 TSRMLS_CC); }
-#   |  expr '.' expr   { zend_do_binary_op(ZEND_CONCAT, &$$, &$1, &$3 TSRMLS_CC); }
-#   |  expr '+' expr   { zend_do_binary_op(ZEND_ADD, &$$, &$1, &$3 TSRMLS_CC); }
-#   |  expr '-' expr   { zend_do_binary_op(ZEND_SUB, &$$, &$1, &$3 TSRMLS_CC); }
-#   |  expr '*' expr  { zend_do_binary_op(ZEND_MUL, &$$, &$1, &$3 TSRMLS_CC); }
-#   |  expr T_POW expr  { zend_do_binary_op(ZEND_POW, &$$, &$1, &$3 TSRMLS_CC); }
-#   |  expr '/' expr  { zend_do_binary_op(ZEND_DIV, &$$, &$1, &$3 TSRMLS_CC); }
-#   |  expr '%' expr   { zend_do_binary_op(ZEND_MOD, &$$, &$1, &$3 TSRMLS_CC); }
-#   |   expr T_SL expr  { zend_do_binary_op(ZEND_SL, &$$, &$1, &$3 TSRMLS_CC); }
-#   |  expr T_SR expr  { zend_do_binary_op(ZEND_SR, &$$, &$1, &$3 TSRMLS_CC); }
-#   |  '+' expr %prec T_INC { ZVAL_LONG(&$1.u.constant, 0); if ($2.op_type == IS_CONST) { add_function(&$2.u.constant, &$1.u.constant, &$2.u.constant TSRMLS_CC); $$ = $2; } else { $1.op_type = IS_CONST; INIT_PZVAL(&$1.u.constant); zend_do_binary_op(ZEND_ADD, &$$, &$1, &$2 TSRMLS_CC); } }
-#   |  '-' expr %prec T_INC { ZVAL_LONG(&$1.u.constant, 0); if ($2.op_type == IS_CONST) { sub_function(&$2.u.constant, &$1.u.constant, &$2.u.constant TSRMLS_CC); $$ = $2; } else { $1.op_type = IS_CONST; INIT_PZVAL(&$1.u.constant); zend_do_binary_op(ZEND_SUB, &$$, &$1, &$2 TSRMLS_CC); } }
-#   |  '!' expr { zend_do_unary_op(ZEND_BOOL_NOT, &$$, &$2 TSRMLS_CC); }
-#   |  '~' expr { zend_do_unary_op(ZEND_BW_NOT, &$$, &$2 TSRMLS_CC); }
-#   |  expr T_IS_IDENTICAL expr    { zend_do_binary_op(ZEND_IS_IDENTICAL, &$$, &$1, &$3 TSRMLS_CC); }
-#   |  expr T_IS_NOT_IDENTICAL expr  { zend_do_binary_op(ZEND_IS_NOT_IDENTICAL, &$$, &$1, &$3 TSRMLS_CC); }
-#   |  expr T_IS_EQUAL expr      { zend_do_binary_op(ZEND_IS_EQUAL, &$$, &$1, &$3 TSRMLS_CC); }
-#   |  expr T_IS_NOT_EQUAL expr     { zend_do_binary_op(ZEND_IS_NOT_EQUAL, &$$, &$1, &$3 TSRMLS_CC); }
-#   |  expr '<' expr           { zend_do_binary_op(ZEND_IS_SMALLER, &$$, &$1, &$3 TSRMLS_CC); }
-#   |  expr T_IS_SMALLER_OR_EQUAL expr { zend_do_binary_op(ZEND_IS_SMALLER_OR_EQUAL, &$$, &$1, &$3 TSRMLS_CC); }
-#   |  expr '>' expr           { zend_do_binary_op(ZEND_IS_SMALLER, &$$, &$3, &$1 TSRMLS_CC); }
-#   |  expr T_IS_GREATER_OR_EQUAL expr { zend_do_binary_op(ZEND_IS_SMALLER_OR_EQUAL, &$$, &$3, &$1 TSRMLS_CC); }
-#   |  expr T_INSTANCEOF class_name_reference { zend_do_instanceof(&$$, &$1, &$3, 0 TSRMLS_CC); }
-#   |  parenthesis_expr   { $$ = $1; }
-#   |  new_expr    { $$ = $1; }
-#   |  '(' new_expr ')' { $$ = $2; } instance_call { $$ = $5; }
-#   |  expr '?' { zend_do_begin_qm_op(&$1, &$2 TSRMLS_CC); }
-#     expr ':' { zend_do_qm_true(&$4, &$2, &$5 TSRMLS_CC); }
-#     expr   { zend_do_qm_false(&$$, &$7, &$2, &$5 TSRMLS_CC); }
-#   |  expr '?' ':' { zend_do_jmp_set(&$1, &$2, &$3 TSRMLS_CC); }
-#     expr     { zend_do_jmp_set_else(&$$, &$5, &$2, &$3 TSRMLS_CC); }
-#   |  internal_functions_in_yacc { $$ = $1; }
-#   |  T_INT_CAST expr   { zend_do_cast(&$$, &$2, IS_LONG TSRMLS_CC); }
-#   |  T_DOUBLE_CAST expr   { zend_do_cast(&$$, &$2, IS_DOUBLE TSRMLS_CC); }
-#   |  T_STRING_CAST expr  { zend_do_cast(&$$, &$2, IS_STRING TSRMLS_CC); }
-#   |  T_ARRAY_CAST expr   { zend_do_cast(&$$, &$2, IS_ARRAY TSRMLS_CC); }
-#   |  T_OBJECT_CAST expr   { zend_do_cast(&$$, &$2, IS_OBJECT TSRMLS_CC); }
-#   |  T_BOOL_CAST expr  { zend_do_cast(&$$, &$2, IS_BOOL TSRMLS_CC); }
-#   |  T_UNSET_CAST expr  { zend_do_cast(&$$, &$2, IS_NULL TSRMLS_CC); }
-#   |  T_EXIT exit_expr  { zend_do_exit(&$$, &$2 TSRMLS_CC); }
-#   |  '@' { zend_do_begin_silence(&$1 TSRMLS_CC); } expr { zend_do_end_silence(&$1 TSRMLS_CC); $$ = $3; }
-#   |  scalar        { $$ = $1; }
-#   |  combined_scalar_offset { zend_do_end_variable_parse(&$1, BP_VAR_R, 0 TSRMLS_CC); }
-#   |  combined_scalar { $$ = $1; }
-#   |  '`' backticks_expr '`' { zend_do_shell_exec(&$$, &$2 TSRMLS_CC); }
-#   |  T_PRINT expr  { zend_do_print(&$$, &$2 TSRMLS_CC); }
-#   |  T_YIELD { zend_do_yield(&$$, NULL, NULL, 0 TSRMLS_CC); }
-#   |  function is_reference { zend_do_begin_lambda_function_declaration(&$$, &$1, $2.op_type, 0 TSRMLS_CC); }
-#     '(' parameter_list ')' lexical_vars
-#     '{' inner_statement_list '}' { zend_do_end_function_declaration(&$1 TSRMLS_CC); $$ = $3; }
-#   |  T_STATIC function is_reference { zend_do_begin_lambda_function_declaration(&$$, &$2, $3.op_type, 1 TSRMLS_CC); }
-#     '(' parameter_list ')' lexical_vars
-#     '{' inner_statement_list '}' { zend_do_end_function_declaration(&$2 TSRMLS_CC); $$ = $4; }
-# ;
 def p_expr_without_variable(p):
     '''expr_without_variable : LIST LPAREN assignment_list RPAREN EQUALS expr
-                             | CLONE expr
-                             | rw_variable INC
-                             | INC rw_variable
-                             | rw_variable DEC
-                             | DEC rw_variable
-                             | expr BOOLEAN_OR expr
-                             | expr BOOLEAN_AND expr
-                             | expr LOGICAL_OR expr
-                             | expr LOGICAL_AND expr
-                             | expr LOGICAL_XOR expr
-                             | expr OR expr
-                             | expr AND expr
-                             | expr XOR expr
-                             | expr CONCAT expr
-                             | expr PLUS expr
-                             | expr MINUS expr
-                             | expr MUL expr
-                             | expr POW expr
-                             | expr DIV expr
-                             | expr MOD expr
-                             | expr SL expr
-                             | expr SR expr
-                             | PLUS expr %prec INC
-                             | DEC expr %prec INC
-                             | BOOLEAN_NOT expr
-                             | NOT expr
-                             | expr IS_IDENTICAL expr
-                             | expr IS_NOT_IDENTICAL expr
-                             | expr IS_EQUAL expr
-                             | expr IS_NOT_EQUAL expr
-                             | expr IS_SMALLER expr
-                             | expr IS_SMALLER_OR_EQUAL expr
-                             | expr IS_GREATER expr
-                             | expr IS_GREATER_OR_EQUAL expr
-                             | expr INSTANCEOF class_name_reference
-                             | parenthesis_expr
                              | LPAREN new_expr RPAREN instance_call
                              | expr QUESTION expr COLON expr
                              | expr QUESTION COLON expr
-                             | internal_functions_in_yacc
-                             | INT_CAST expr
-                             | DOUBLE_CAST expr
-                             | STRING_CAST expr
-                             | ARRAY_CAST expr
-                             | OBJECT_CAST expr
-                             | BOOL_CAST expr
-                             | UNSET_CAST expr
-                             | EXIT exit_expr
-                             | AT expr
                              | BACKTICK backticks_expr BACKTICK
-                             | PRINT expr
                              | YIELD
                              | function is_reference LPAREN parameter_list RPAREN lexical_vars LBRACE inner_statement_list RBRACE
                              | STATIC function is_reference LPAREN parameter_list RPAREN lexical_vars LBRACE inner_statement_list RBRACE
@@ -1417,6 +1285,8 @@ def p_expr_without_variable_identity(p):
     '''expr_without_variable : scalar
                              | combined_scalar_offset
                              | combined_scalar
+                             | parenthesis_expr
+                             | internal_functions_in_yacc
                              | new_expr'''
     p[0] = p[1]
 
@@ -1436,14 +1306,68 @@ def p_expr_without_variable_assignment(p):
                              | variable SR_EQUAL expr'''
     p[0] = ast.AssignOp(p[1], p[2], p[3])
 
+def p_expr_without_variable_binary(p):
+    '''expr_without_variable : expr IS_IDENTICAL expr
+                             | expr IS_NOT_IDENTICAL expr
+                             | expr IS_EQUAL expr
+                             | expr IS_NOT_EQUAL expr
+                             | expr IS_SMALLER expr
+                             | expr IS_SMALLER_OR_EQUAL expr
+                             | expr IS_GREATER expr
+                             | expr IS_GREATER_OR_EQUAL expr
+                             | expr INSTANCEOF class_name_reference
+                             | expr BOOLEAN_OR expr
+                             | expr BOOLEAN_AND expr
+                             | expr LOGICAL_OR expr
+                             | expr LOGICAL_AND expr
+                             | expr LOGICAL_XOR expr
+                             | expr OR expr
+                             | expr AND expr
+                             | expr XOR expr
+                             | expr CONCAT expr
+                             | expr PLUS expr
+                             | expr MINUS expr
+                             | expr MUL expr
+                             | expr POW expr
+                             | expr DIV expr
+                             | expr MOD expr
+                             | expr SL expr
+                             | expr SR expr
+                             '''
+    p[0] = ast.BinaryOp(p[2].lower(), p[1], p[3], lineno=p.lineno(2))
+
+def p_expr_without_variable_unary(p):
+    '''expr_without_variable : CLONE expr
+                             | INC rw_variable
+                             | DEC rw_variable
+                             | PLUS expr %prec INC
+                             | MINUS expr %prec INC
+                             | BOOLEAN_NOT expr
+                             | NOT expr
+                             | INT_CAST expr
+                             | DOUBLE_CAST expr
+                             | STRING_CAST expr
+                             | ARRAY_CAST expr
+                             | OBJECT_CAST expr
+                             | BOOL_CAST expr
+                             | UNSET_CAST expr
+                             | EXIT exit_expr
+                             | AT expr
+                             | PRINT expr
+                             '''
+
+def p_expr_without_variable_post_unary(p):
+    '''expr_without_variable : rw_variable INC
+                             | rw_variable DEC'''
+
 def p_expr_without_variable_reference_assignment(p):
-    '''expr_without_variable : variable EQUALS AND variable
-                             | variable EQUALS AND NEW class_name_reference ctor_arguments'''
-    if len(p) == 4:
-        p[0] = ast.Assignment(p[1], p[4], is_ref=True)
-    else:
-        # This is deprecated anyway...
-        p[0] = ast.Assignment(p[1], "new object", is_ref=True)
+    '''expr_without_variable : variable EQUALS AND variable'''
+    p[0] = ast.Assignment(p[1], p[4], is_ref=True, lineno=p.lineno(1))
+
+def p_expr_without_variable_reference_new_assignment(p):
+    '''expr_without_variable : variable EQUALS AND NEW class_name_reference ctor_arguments'''
+    new = ast.New(p[5], p[6], lineno=p.lineno(1))
+    p[0] = ast.Assignment(p[1], new, is_ref=True, lineno=p.lineno(1))
 
 # yield_expr:
 #     T_YIELD expr_without_variable { zend_do_yield(&$$, &$2, NULL, 0 TSRMLS_CC); }
