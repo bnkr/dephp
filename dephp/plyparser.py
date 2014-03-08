@@ -1852,17 +1852,26 @@ def p_static_operation(p):
 #   |  T_START_HEREDOC encaps_list T_END_HEREDOC { $$ = $2; }
 #   |  T_CLASS_C        { if (Z_TYPE($1.u.constant) == IS_CONSTANT) {zend_do_fetch_constant(&$$, NULL, &$1, ZEND_RT, 1 TSRMLS_CC);} else {$$ = $1;} }
 # ;
-def p_scalar(p):
+def p_scalar_identity(p):
     '''scalar : STRING_VARNAME
               | class_name_scalar
               | class_constant
               | namespace_name
-              | NAMESPACE NS_SEPARATOR namespace_name
-              | NS_SEPARATOR namespace_name
               | common_scalar
+              '''
+    p[0] = p[1]
+
+def p_scalar_magic(p):
+    '''scalar : CLASS_C'''
+    # Bit unclear why this isn't in common scalar...
+    p[0] = ast.MagicConstant(p[1].upper(), None, lineno=p.lineno(1))
+
+def p_scalar_other(p):
+    '''scalar : NAMESPACE NS_SEPARATOR namespace_name
+              | NS_SEPARATOR namespace_name
               | QUOTE encaps_list QUOTE
               | START_HEREDOC encaps_list END_HEREDOC
-              | CLASS_C'''
+              '''
 
 def p_scalar_double_quote_string(p):
     'scalar : QUOTE ENCAPSED_AND_WHITESPACE QUOTE'
@@ -2149,7 +2158,6 @@ def p_object_dim_list_empty(p):
 
 def p_object_dim_list_array_offset(p):
     'object_dim_list : object_dim_list LBRACKET dim_offset RBRACKET'
-    print p[1], p[3]
     p[0] = p[1] + [(ast.ArrayOffset, p[3], p.lineno(2))]
 
 def p_object_dim_list_string_offset(p):

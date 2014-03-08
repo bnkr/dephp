@@ -28,5 +28,6 @@ class ExpressionTestCase(TestCase):
         self.assertEquals(expected, parsed)
 
     def test_assign_with_single_quotes(self):
-        ast = parse_string('<?php $data = \'a\';')
-        self.assertEquals([], ast)
+        parsed = parse_string('<?php $data = \'a\';')
+        expected = [ast.AssignOp(ast.Variable('$data'), '=', 'a')]
+        self.assertEquals(expected, parsed)
