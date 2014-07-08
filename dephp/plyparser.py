@@ -1,3 +1,8 @@
+"""
+This grammar is developed with a lot of help from phply and php itself.  You can
+see licenses for those products in doc/.
+"""
+
 import os, sys, logging
 import ply.yacc as yacc
 
