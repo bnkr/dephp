@@ -19,3 +19,12 @@ class PrettyOutputter(object):
                 pass
                 # print node
                 # self.loop(node)
+
+class NoopOutputter(object):
+    """Does nothing.  Useful if you just want to output debugging
+    information."""
+    def __init__(self, ast):
+        pass
+
+    def run(self):
+        pass

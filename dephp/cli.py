@@ -55,14 +55,17 @@ class DephpRunner(object):
         """Create an AST and do some Stuff with it."""
         from dephp.plyparser import parser
         from dephp.scanner import lexer, LexerSyntaxError
-        from dephp.pretty import PrettyOutputter
+        from dephp.output import PrettyOutputter, NoopOutputter
 
         if settings.debug or settings.verbose:
             logger = logging.getLogger("dephp.parser")
         else:
             logger = None
 
-        converter = {'pretty': PrettyOutputter}[settings.to]
+        conversions = {'pretty': PrettyOutputter,
+                       'noop': NoopOutputter}
+
+        converter = conversions[settings.to]
 
         for name in settings.file:
             with open(name, 'r') as io:
