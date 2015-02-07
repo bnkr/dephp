@@ -89,10 +89,36 @@ class Node(object):
             values[field] = value
         return (self.__class__.__name__, values)
 
+    def depth_first(self, visitor, children=None):
+        """Traverse the tree in a depth first way, passing return values from
+        all the child visitors to the parent.  This is useful to collapse the
+        tree into some other value, e.g. pretified output."""
+        def flatten(S):
+            if S == []:
+                return S
+            if isinstance(S[0], list):
+                return flatten(S[0]) + flatten(S[1:])
+            return S[:1] + flatten(S[1:])
+
+        children = children or []
+        returns = []
+        for field in self.fields:
+            for value in flatten([getattr(self, field)]):
+                if isinstance(value, Node):
+                    returns.append(value.depth_first(visitor, children))
+                elif value is None:
+                    continue
+                else:
+                    returns.append(value)
+
+        return visitor(self, returns)
+
 def node(name, fields):
     attrs = {'fields': fields}
     return type(name, (Node,), attrs)
 
+Program = node("Program", ['statements'])
+Noop = node('Noop', [])
 InlineHTML = node('InlineHTML', ['data'])
 Block = node('Block', ['nodes'])
 Assignment = node('Assignment', ['node', 'expr', 'is_ref'])
@@ -138,6 +164,7 @@ Silence = node('Silence', ['expr'])
 MagicConstant = node('MagicConstant', ['name', 'value'])
 Constant = node('Constant', ['name'])
 Variable = node('Variable', ['name'])
+String = node('String', ['value',])
 StaticVariable = node('StaticVariable', ['name', 'initial'])
 LexicalVariable = node('LexicalVariable', ['name', 'is_ref'])
 FormalParameter = node('FormalParameter', ['name', 'default', 'is_ref', 'type'])

@@ -46,7 +46,7 @@ precedence = (
 
 def p_start(p):
     '''start : top_statement_list'''
-    p[0] = p[1]
+    p[0] = ast.Program(p[1])
 
 def p_top_statement_list(p):
     '''top_statement_list : top_statement_list top_statement
@@ -377,7 +377,7 @@ def p_unticked_statement_declare(p):
 #   |  ';'    /* empty statement */
 def p_unticked_statement_empty(p):
     'unticked_statement : SEMI'
-    pass
+    p[0] = ast.Noop()
 
 #   |  T_TRY { zend_do_try(&$1 TSRMLS_CC); } '{' inner_statement_list '}'
 #     catch_statement { zend_do_bind_catch(&$1, &$6 TSRMLS_CC); }
@@ -391,9 +391,9 @@ def p_unticked_statement_try(p):
     #   RBRACE additional_catches'
     #
     # Probably won't work.
-    # p[0] = ast.Try(p[3], [ast.Catch(p[7], ast.Variable(p[8], lineno=p.lineno(8)),
-    #                                 p[11], lineno=p.lineno(5))] + p[13],
-    #                lineno=p.lineno(1))
+    p[0] = ast.Try(p[3], [ast.Catch(p[7], ast.Variable(p[8], lineno=p.lineno(8)),
+                                    p[11], lineno=p.lineno(5))] + p[13],
+                                    lineno=p.lineno(1))
 
 #   |  T_THROW expr ';' { zend_do_throw(&$2 TSRMLS_CC); }
 def p_unticked_statement_throw(p):
@@ -1633,7 +1633,8 @@ def p_common_scalar_dnumber(p):
 
 def p_common_scalar_string(p):
     'common_scalar : CONSTANT_ENCAPSED_STRING'
-    p[0] = p[1][1:-1].replace("\\'", "'").replace('\\\\', '\\')
+    unescaped = p[1][1:-1].replace("\\'", "'").replace('\\\\', '\\')
+    p[0] = ast.String(unescaped)
 
 def p_common_scalar_magic_line(p):
     'common_scalar : LINE'
@@ -1710,6 +1711,8 @@ def p_static_scalar_value(p):
                            | static_class_constant
                            | CLASS_C
                            | static_operation'''
+    # totally wrong
+    p[0] = p[1]
 
 def p_static_operation(p):
     '''static_operation : static_scalar_value PLUS static_scalar_value
@@ -1794,7 +1797,7 @@ def p_scalar_double_quote_string(p):
     # to reduce encaps_list like that.  (If you attempt to do it there you get
     # problems with backtick expressions.  Phply doesn't support backticks so
     # that's probably why it doesn't solve this problem.
-    p[0] = p[2]
+    p[0] = ast.String(p[2], lineno=p.lineno(1))
 
 # static_array_pair_list:
 #     /* empty */ { $$.op_type = IS_CONST; INIT_PZVAL(&$$.u.constant); array_init(&$$.u.constant); }

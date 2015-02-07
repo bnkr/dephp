@@ -1,6 +1,14 @@
 from unittest import TestCase
 from ply.lex import LexToken
-from dephp.scanner import lexer
+from dephp.scanner import lexer, scan_string
+
+def iter_tokens(lexer):
+    while True:
+        token = lexer.token()
+        if token is None:
+            break
+        else:
+            yield token
 
 class LexerTestCase(TestCase):
     def _make_lexer(self, string):
@@ -9,9 +17,9 @@ class LexerTestCase(TestCase):
         return lexer
 
     def test_lex_something(self):
-        lexer.input("stuff")
+        # Probably broken because we messed with things to make double quotes work...
+        token = scan_string("stuff")[0]
 
-        token = lexer.token()
         self.assertEquals("stuff", token.value)
         self.assertEquals(1, token.lineno)
         self.assertEquals('INLINE_HTML', token.type)
@@ -20,14 +28,6 @@ class LexerTestCase(TestCase):
         self.assertEquals(None, token)
 
     def test_unknown_is_token(self):
-        def iter_tokens(lexer):
-            while True:
-                token = lexer.token()
-                if token is None:
-                    break
-                else:
-                    yield token
-
         lexer = self._make_lexer("<?php\xFF;")
 
         expected = [('UNKNOWN', '\xFF'),

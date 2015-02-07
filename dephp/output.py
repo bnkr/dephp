@@ -1,5 +1,12 @@
 from dephp import phpast as syn
-import sys
+import sys, pprint
+
+def flatten(S):
+    if S == []:
+        return S
+    if isinstance(S[0], list):
+        return flatten(S[0]) + flatten(S[1:])
+    return S[:1] + flatten(S[1:])
 
 class PrettyOutputter(object):
     def __init__(self, ast):
@@ -7,18 +14,24 @@ class PrettyOutputter(object):
         self.out = sys.stdout
 
     def run(self):
-        self.loop(self.ast)
+        def visitor(node, children):
+            print node.__class__
+            if isinstance(node, syn.Variable):
+                return node.name
 
-    def loop(self, ast):
-        for node in ast:
-            if isinstance(node, syn.Class):
-                self.out.write("class " + node.name + " {\n")
-                self.loop(node.nodes)
-                self.out.write("}\n")
-            else:
-                pass
-                # print node
-                # self.loop(node)
+            if isinstance(node, syn.String):
+                return '"{0}"'.format(node.value)
+
+            if isinstance(node, syn.AssignOp):
+                return "{0} {1} {2};\n".format(*flatten(children))
+
+            if isinstance(node, syn.Program):
+                return "".join(flatten(children))
+
+            return "<unknown node: {0}>".format(node.__class__.__name__)
+
+        self.out.write(str(self.ast.depth_first(visitor)))
+        self.out.write("\n")
 
 class NoopOutputter(object):
     """Does nothing.  Useful if you just want to output debugging
