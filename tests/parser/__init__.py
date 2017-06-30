@@ -46,3 +46,8 @@ class InternalFunctionsTestCase(TestCase):
         parsed = parse_string('<?php isset($a, $b);')
         expected = ast.Program([ast.IsSet([ast.Variable('$a'), ast.Variable('$b')])])
         self.assertEquals(expected, parsed)
+
+    def test_empty(self):
+        parsed = parse_string('<?php empty($a);')
+        expected = ast.Program([ast.Empty(ast.Variable('$a'))])
+        self.assertEquals(expected, parsed)

@@ -2288,7 +2288,22 @@ def p_internal_functions_in_yacc(p):
                                   | REQUIRE expr
                                   | REQUIRE_ONCE expr
                                   '''
-    p[0] = ast.IsSet(p[3])
+    if p[1] == 'isset':
+        p[0] = ast.IsSet(p[3])
+    elif p[1] == 'empty':
+        p[0] = ast.Empty(p[3])
+    elif p[1] == 'include':
+        p[0] = ast.Include(p[2], False)
+    elif p[1] == 'include_once':
+        p[0] = ast.Include(p[2], True)
+    elif p[1] == 'require':
+        p[0] = ast.Require(p[2], False)
+    elif p[1] == 'require_once':
+        p[0] = ast.Require(p[2], True)
+    elif p[1] == 'eval':
+        p[0] = ast.Eval(p[3])
+    else:
+        raise Exception("consufed")
 
 # isset_variables:
 #     isset_variable      { $$ = $1; }
