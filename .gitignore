@@ -4,13 +4,13 @@
 *.py[co]
 .coverage
 coverage-output
+# Parser generator
+dephp/parser.out
+dephp/parsetab.py
 # setup
 dist/
 build/
 MANIFEST
+dephp.egg-info
 # Buildout stuff
-bin/
-eggs/
-develop-eggs/
-parts/
-.installed.cfg
+venv

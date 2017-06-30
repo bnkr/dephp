@@ -1,0 +1,6 @@
+nose
+coverage
+mock
+argparse
+ply
+six
