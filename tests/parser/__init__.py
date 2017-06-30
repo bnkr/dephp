@@ -36,3 +36,13 @@ class ExpressionTestCase(TestCase):
         parsed = parse_string('<?php (new stdclass(1, 2))->prop;')
         expected = ast.Program([ast.AssignOp(ast.Variable('$data'), '=', ast.String('a'))])
         self.assertEquals(expected, parsed)
+
+class InternalFunctionsTestCase(TestCase):
+    def test_isset(self):
+        parsed = parse_string('<?php isset($a);')
+        expected = ast.Program([ast.IsSet([ast.Variable('$a')])])
+        self.assertEquals(expected, parsed)
+
+        parsed = parse_string('<?php isset($a, $b);')
+        expected = ast.Program([ast.IsSet([ast.Variable('$a'), ast.Variable('$b')])])
+        self.assertEquals(expected, parsed)

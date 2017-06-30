@@ -2288,6 +2288,8 @@ def p_internal_functions_in_yacc(p):
                                   | REQUIRE expr
                                   | REQUIRE_ONCE expr
                                   '''
+    p[0] = ast.IsSet(p[3])
+
 # isset_variables:
 #     isset_variable      { $$ = $1; }
 #   |  isset_variables ',' { zend_do_boolean_and_begin(&$1, &$2 TSRMLS_CC); } isset_variable { zend_do_boolean_and_end(&$$, &$1, &$4, &$2 TSRMLS_CC); }
