@@ -9,6 +9,19 @@ import ply.yacc as yacc
 from dephp import phpast as ast
 from dephp.scanner import tokens
 
+RAISE_FOR_NOT_IMPLEMENTED = True
+
+def not_implemented(why=None):
+    if why:
+        message = "not implemented: " + why
+    else:
+        message = "not implemented"
+
+    if RAISE_FOR_NOT_IMPLEMENTED:
+        raise Exception(message)
+    else:
+        print "notice: {0}".format(message)
+
 precedence = (
     ('left', 'INCLUDE', 'INCLUDE_ONCE', 'EVAL', 'REQUIRE', 'REQUIRE_ONCE'),
     ('left', 'COMMA'),
@@ -391,6 +404,14 @@ def p_unticked_statement_try(p):
     #   RBRACE additional_catches'
     #
     # Probably won't work.
+    #
+    #
+    # TODO:
+    #   This needs to flatten all the extra statements into a different kind of
+    #   node because this method is only coung to work with one catch and
+    #   doesn't support a finally probperly..
+    not_implemented()
+
     p[0] = ast.Try(p[3], [ast.Catch(p[7], ast.Variable(p[8], lineno=p.lineno(8)),
                                     p[11], lineno=p.lineno(5))] + p[13],
                                     lineno=p.lineno(1))
@@ -417,7 +438,8 @@ def p_unticked_statement_goto(p):
 def p_catch_statement(p):
     '''catch_statement : empty
                        | CATCH LPAREN fully_qualified_class_name VARIABLE RPAREN LBRACE inner_statement_list RBRACE additional_catches'''
-    pass
+    not_implemented()
+
 
 # additional_catches:
 #     non_empty_additional_catches { $$ = $1; }
@@ -434,6 +456,7 @@ def p_additional_catches(p):
     # And this rule was direct in the try_statement rule.
     # if len(1) == 1:
     #     p[0] = p[1]
+    not_implemented()
 
 # non_empty_additional_catches:
 #     additional_catch { $$ = $1; }
@@ -442,6 +465,7 @@ def p_additional_catches(p):
 def p_non_empty_additional_catches(p):
     '''non_empty_additional_catches : additional_catch
                                     | non_empty_additional_catches additional_catch'''
+    not_implemented()
 
 # additional_catch:
 #   T_CATCH '(' fully_qualified_class_name
@@ -453,6 +477,7 @@ def p_non_empty_additional_catches(p):
 # ;
 def p_additional_catch(p):
     '''additional_catch : CATCH LPAREN fully_qualified_class_name VARIABLE RPAREN LBRACE inner_statement_list RBRACE'''
+    not_implemented()
 
 # finally_statement:
 #           /* empty */ { $$.op_type = IS_UNUSED; }
@@ -461,6 +486,7 @@ def p_additional_catch(p):
 def p_finally_statement(p):
     '''finally_statement : empty
                          | FINALLY LBRACE inner_statement_list RBRACE'''
+    not_implemented()
 
 # unset_variables:
 #     unset_variable
@@ -590,6 +616,9 @@ def p_interface_list(p):
 def p_is_reference(p):
     '''is_reference : AND
                     | empty'''
+    # TODO:
+    #   This doesn't make much sense, I expect it should return a special node
+    #   so that we can test it elsewhere.
     p[0] = p[1] is not None
 
 # is_variadic:
@@ -601,7 +630,7 @@ def p_is_reference(p):
 def p_is_variadic(p):
     '''is_variadic : ELLIPSIS
                    | empty'''
-    pass
+    not_implemented()
 
 # for_statement:
 #     statement
@@ -722,7 +751,7 @@ def p_case_list(p):
 def p_case_separator(p):
     '''case_separator : COLON
                       | SEMI'''
-    pass
+    not_implemented()
 
 # while_statement:
 #     statement
@@ -843,6 +872,7 @@ def p_parameter(p):
     #     p[0] = ast.FormalParameter(p[2], p[4], False, p[1], lineno=p.lineno(1))
     # else: # STRING AND VARIABLE EQUALS static_scalar
     #     p[0] = ast.FormalParameter(p[3], p[5], True, p[1], lineno=p.lineno(1))
+    not_implemented()
 
 # optional_class_type:
 #     /* empty */          { $$.op_type = IS_UNUSED; }
@@ -879,6 +909,7 @@ def p_function_call_parameter_list(p):
     #     p[0] = p[1] + [p[3]]
     # else:
     #     p[0] = [p[1]]
+    not_implemented()
 
 # non_empty_function_call_parameter_list:
 #     function_call_parameter
@@ -887,7 +918,7 @@ def p_function_call_parameter_list(p):
 def p_non_empty_function_call_parameter_list(p):
     '''non_empty_function_call_parameter_list : function_call_parameter
                                               | non_empty_function_call_parameter_list COMMA function_call_parameter'''
-    # assert False # TODO: missing in phply
+    not_implemented()
 
 # function_call_parameter:
 #     expr_without_variable  { zend_do_pass_param(&$1, ZEND_SEND_VAL TSRMLS_CC); }
@@ -1002,8 +1033,7 @@ def p_class_statement(p):
     elif len(p) == 4:
         p[0] = ast.ClassVariables(p[1], p[2], lineno=p.lineno(3))
     elif len(p) == 1:
-        # assert False # missing action
-        pass
+        not_implemented("trait use statement not impemented")
     else:
         p[0] = ast.ClassConstants(p[1], lineno=p.lineno(2))
 
@@ -1013,6 +1043,7 @@ def p_class_statement(p):
 def p_trait_use_statement(p):
     '''trait_use_statement : USE trait_list trait_adaptations'''
     # assert False # TODO: missing trait_use_statement
+    not_implemented()
 
 # trait_list:
 #     fully_qualified_class_name            { zend_do_use_trait(&$1 TSRMLS_CC); }
@@ -1022,6 +1053,7 @@ def p_trait_list(p):
     '''trait_list : fully_qualified_class_name
                   |  trait_list COMMA fully_qualified_class_name'''
     # assert False # TODO: missing trait_use_statement
+    not_implemented()
 
 # trait_adaptations:
 #     ';'
@@ -1031,6 +1063,7 @@ def p_trait_adaptations(p):
     '''trait_adaptations : SEMI
                          | LBRACE trait_adaptation_list RBRACE'''
     # assert False # TODO: missing trait_use_statement
+    not_implemented()
 
 # trait_adaptation_list:
 #     /* empty */
@@ -1040,6 +1073,7 @@ def p_trait_adaptation_list(p):
     '''trait_adaptation_list : empty
                              | non_empty_trait_adaptation_list'''
     # assert False
+    not_implemented()
 
 # non_empty_trait_adaptation_list:
 #     trait_adaptation_statement
@@ -1049,6 +1083,7 @@ def p_non_empty_trait_adaptation_list(p):
     '''non_empty_trait_adaptation_list : trait_adaptation_statement
                                        |  non_empty_trait_adaptation_list trait_adaptation_statement'''
     # assert False
+    not_implemented()
 
 # trait_adaptation_statement:
 #     trait_precedence ';'
@@ -1058,6 +1093,7 @@ def p_trait_adaptation_statement(p):
     '''trait_adaptation_statement : trait_precedence SEMI
                                   | trait_alias SEMI'''
     # assert False
+    not_implemented()
 
 # trait_precedence:
 #   trait_method_reference_fully_qualified T_INSTEADOF trait_reference_list  { zend_add_trait_precedence(&$1, &$3 TSRMLS_CC); }
@@ -1065,6 +1101,7 @@ def p_trait_adaptation_statement(p):
 def p_trait_precedence(p):
     '''trait_precedence : trait_method_reference_fully_qualified INSTEADOF trait_reference_list'''
     # assert False
+    not_implemented()
 
 # trait_reference_list:
 #     fully_qualified_class_name                  { zend_resolve_class_name(&$1 TSRMLS_CC); zend_init_list(&$$.u.op.ptr, Z_STRVAL($1.u.constant) TSRMLS_CC); }
@@ -1073,6 +1110,7 @@ def p_trait_precedence(p):
 def p_trait_reference_list(p):
     '''trait_reference_list : fully_qualified_class_name
                             |  trait_reference_list COMMA fully_qualified_class_name'''
+    not_implemented()
 
 # trait_method_reference:
 #     T_STRING                          { zend_prepare_reference(&$$, NULL, &$1 TSRMLS_CC); }
@@ -1081,13 +1119,14 @@ def p_trait_reference_list(p):
 def p_trait_method_reference(p):
     '''trait_method_reference : STRING
                               | trait_method_reference_fully_qualified'''
+    not_implemented()
 
 # trait_method_reference_fully_qualified:
 #   fully_qualified_class_name T_DOUBLE_COLON T_STRING    { zend_prepare_reference(&$$, &$1, &$3 TSRMLS_CC); }
 # ;
 def p_trait_method_reference_fully_qualified(p):
     '''trait_method_reference_fully_qualified : fully_qualified_class_name DOUBLE_COLON STRING'''
-
+    not_implemented()
 
 # trait_alias:
 #     trait_method_reference T_AS trait_modifiers T_STRING    { zend_add_trait_alias(&$1, &$3, &$4 TSRMLS_CC); }
@@ -1096,6 +1135,7 @@ def p_trait_method_reference_fully_qualified(p):
 def p_trait_alias(p):
     '''trait_alias : trait_method_reference AS trait_modifiers STRING
                    | trait_method_reference AS member_modifier'''
+    not_implemented()
 
 # trait_modifiers:
 #     /* empty */          { Z_LVAL($$.u.constant) = 0x0; } /* No change of methods visibility */
@@ -1104,6 +1144,7 @@ def p_trait_alias(p):
 def p_trait_modifiers(p):
     '''trait_modifiers : empty
                        | member_modifier'''
+    not_implemented()
 
 # method_body:
 #     ';' /* abstract method */    { Z_LVAL($$.u.constant) = ZEND_ACC_ABSTRACT; }
@@ -1240,6 +1281,7 @@ def p_non_empty_for_expr(p):
 def p_chaining_method_or_property(p):
     '''chaining_method_or_property : chaining_method_or_property variable_property
                                    |  variable_property'''
+    not_implemented()
 
 # chaining_dereference:
 #     chaining_dereference '[' dim_offset ']'  { fetch_array_dim(&$$, &$1, &$3 TSRMLS_CC); }
@@ -1248,7 +1290,7 @@ def p_chaining_method_or_property(p):
 def p_chaining_dereference(p):
     '''chaining_dereference : chaining_dereference LBRACKET dim_offset RBRACKET
                             | LBRACKET dim_offset RBRACKET'''
-    pass
+    not_implemented()
 
 # chaining_instance_call:
 #     chaining_dereference     { zend_do_push_object(&$1 TSRMLS_CC); } chaining_method_or_property { $$ = $3; }
@@ -1259,7 +1301,7 @@ def p_chaining_instance_call(p):
     '''chaining_instance_call : chaining_dereference chaining_method_or_property
                               | chaining_dereference
                               | chaining_method_or_property'''
-    pass
+    not_implemented()
 
 # TODO:
 #   Seems more sensible for this to be after 'expr'... ?  I think it's a hack so
@@ -1273,6 +1315,7 @@ def p_chaining_instance_call(p):
 def p_instance_call(p):
     '''instance_call : empty
                      | chaining_instance_call'''
+    not_implemented()
 
 def p_new_expr(p):
     '''new_expr : NEW class_name_reference ctor_arguments'''
@@ -1287,6 +1330,8 @@ def p_expr_without_variable(p):
                              | function is_reference LPAREN parameter_list RPAREN lexical_vars LBRACE inner_statement_list RBRACE
                              | STATIC function is_reference LPAREN parameter_list RPAREN lexical_vars LBRACE inner_statement_list RBRACE
                              '''
+    not_implemented()
+
 def p_expr_without_variable_conflictey_brackets(p):
     '''expr_without_variable : parenthesis_expr
                              | LPAREN new_expr RPAREN instance_call
@@ -1295,6 +1340,7 @@ def p_expr_without_variable_conflictey_brackets(p):
     # Undocumented shift/reduce here is present in php's grammar as well.  We
     # can solve it py putting instance_call after parenthesis_expr but I think
     # that would by very broad.
+    not_implemented()
 
 def p_expr_without_variable_identity(p):
     '''expr_without_variable : scalar
@@ -1369,10 +1415,12 @@ def p_expr_without_variable_unary(p):
                              | AT expr
                              | PRINT expr
                              '''
+    not_implemented()
 
 def p_expr_without_variable_post_unary(p):
     '''expr_without_variable : rw_variable INC
                              | rw_variable DEC'''
+    not_implemented()
 
 def p_expr_without_variable_reference_assignment(p):
     '''expr_without_variable : variable EQUALS AND variable'''
@@ -1394,6 +1442,7 @@ def p_yield_expr(p):
                   | YIELD variable
                   | YIELD expr DOUBLE_ARROW expr_without_variable
                   | YIELD expr DOUBLE_ARROW variable'''
+    not_implemented()
 
 # combined_scalar_offset:
 #     combined_scalar '[' dim_offset ']' { zend_do_begin_variable_parse(TSRMLS_C); fetch_array_dim(&$$, &$1, &$3 TSRMLS_CC); }
@@ -1403,6 +1452,7 @@ def p_combined_scalar_offset(p):
     '''combined_scalar_offset : combined_scalar LBRACKET dim_offset RBRACKET
                               | combined_scalar_offset LBRACKET dim_offset RBRACKET
                               | CONSTANT_ENCAPSED_STRING LBRACKET dim_offset RBRACKET'''
+    not_implemented()
 
 # combined_scalar:
 #       T_ARRAY '(' array_pair_list ')' { $$ = $3; }
@@ -1410,12 +1460,14 @@ def p_combined_scalar_offset(p):
 def p_combined_scalar(p):
     '''combined_scalar : ARRAY LPAREN array_pair_list RPAREN
                        | LBRACKET array_pair_list RBRACKET'''
+    not_implemented()
 
 # function:
 #   T_FUNCTION { $$.u.op.opline_num = CG(zend_lineno); }
 # ;
 def p_function(p):
     'function : FUNCTION'
+    not_implemented()
 
 # lexical_vars:
 #     /* empty */
@@ -1473,7 +1525,7 @@ def p_function_call(p):
     else:
         # print [p[i] for i in (1, 2, 3,)]
         # p[0] = ast.FunctionCall(p[1] + p[2] + p[3], p[4], lineno=p.lineno(1))
-        pass
+        not_implemented()
 
 def p_function_call_static(p):
     '''function_call : class_name DOUBLE_COLON STRING function_call_parameter_list
@@ -1581,6 +1633,7 @@ def p_exit_expr(p):
     '''exit_expr : empty
                  | LPAREN RPAREN
                  | parenthesis_expr'''
+    not_implemented()
 
 # backticks_expr:
 #     /* empty */  { ZVAL_EMPTY_STRING(&$$.u.constant); INIT_PZVAL(&$$.u.constant); $$.op_type = IS_CONST; }
@@ -1591,6 +1644,7 @@ def p_backticks_expr(p):
     '''backticks_expr : empty
                       | ENCAPSED_AND_WHITESPACE
                       | encaps_list'''
+    not_implemented()
 
 # ctor_arguments:
 #     /* empty */  { Z_LVAL($$.u.constant) = 0; }
@@ -1671,12 +1725,14 @@ def p_common_scalar_magic_ns(p):
 def p_common_heredoc(p):
     '''common_scalar : START_HEREDOC ENCAPSED_AND_WHITESPACE END_HEREDOC
                      | START_HEREDOC END_HEREDOC'''
+    not_implemented()
 
 # static_class_constant:
 #     class_name T_DOUBLE_COLON T_STRING { zend_do_fetch_constant(&$$, &$1, &$3, ZEND_CT, 0 TSRMLS_CC); }
 # ;
 def p_static_class_constant(p):
     '''static_class_constant : class_name DOUBLE_COLON STRING'''
+    not_implemented()
 
 # static_scalar: /* compile-time evaluated scalars */
 #     static_scalar_value { zend_do_constant_expression(&$$, $1.u.ast TSRMLS_CC); }
@@ -1691,6 +1747,7 @@ def p_static_scalar(p):
     #   Static scalar is done a bit better in phply.  Probably we don't need to
     #   do most of this because we don't actually want to evaluate anything at
     #   compile time...
+    not_implemented()
 
 # static_scalar_value:
 #     common_scalar  { $$.u.ast = zend_ast_create_constant(&$1.u.constant); }
@@ -1748,6 +1805,7 @@ def p_static_operation(p):
                         | MINUS static_scalar_value
                         | LPAREN static_scalar_value RPAREN
                         '''
+    not_implemented()
 
 # scalar:
 #     T_STRING_VARNAME
@@ -1819,7 +1877,7 @@ def p_static_array_pair_list(p):
 def p_possible_comma(p):
     '''possible_comma : empty
                       | COMMA'''
-    pass
+    not_implemented()
 
 # non_empty_static_array_pair_list:
 #     non_empty_static_array_pair_list ',' static_scalar T_DOUBLE_ARROW static_scalar  { zend_do_add_static_array_element(&$$, &$3, &$5); }
@@ -1859,6 +1917,7 @@ def p_expr(p):
 def p_parenthesis_expr(p):
     '''parenthesis_expr : LPAREN expr RPAREN
                         | LPAREN yield_expr RPAREN'''
+    not_implemented()
 
 # r_variable:
 #   variable { zend_do_end_variable_parse(&$1, BP_VAR_R, 0 TSRMLS_CC); $$ = $1; }
@@ -1938,6 +1997,7 @@ def p_variable_property(p):
 def p_array_method_dereference(p):
     '''array_method_dereference : array_method_dereference LBRACKET dim_offset RBRACKET
                                 | method LBRACKET dim_offset RBRACKET'''
+    not_implemented()
 
 # method:
 #     { zend_do_pop_object(&$$ TSRMLS_CC); zend_do_begin_method_call(&$$ TSRMLS_CC); }
@@ -1945,6 +2005,7 @@ def p_array_method_dereference(p):
 # ;
 def p_method(p):
     '''method : function_call_parameter_list'''
+    not_implemented()
 
 # method_or_not:
 #     method            { $$ = $1; $$.EA = ZEND_PARSED_METHOD_CALL; zend_do_push_object(&$$ TSRMLS_CC); }
@@ -1955,7 +2016,7 @@ def p_method_or_not(p):
     '''method_or_not : method
                      | array_method_dereference
                      | empty'''
-
+    not_implemented()
 
 # variable_without_objects:
 #     reference_variable { $$ = $1; }
@@ -1988,6 +2049,7 @@ def p_variable_class_name(p):
 def p_array_function_dereference(p):
     '''array_function_dereference : array_function_dereference LBRACKET dim_offset RBRACKET
                                   | function_call LBRACKET dim_offset RBRACKET'''
+    not_implemented()
 
 # base_variable_with_function_calls:
 #     base_variable        { $$ = $1; }
@@ -2215,6 +2277,7 @@ def p_encaps_list_string(p):
 def p_encaps_list_others(p):
     '''encaps_list : encaps_var
                    | ENCAPSED_AND_WHITESPACE encaps_var'''
+    not_implemented()
 
 # encaps_var:
 #     T_VARIABLE
@@ -2340,6 +2403,7 @@ def p_class_constant(p):
 # ;
 def p_static_class_name_scalar(p):
     '''static_class_name_scalar : class_name DOUBLE_COLON CLASS'''
+    not_implemented()
 
 # class_name_scalar:
 #   class_name T_DOUBLE_COLON T_CLASS { zend_do_resolve_class_name(&$$, &$1, 0 TSRMLS_CC); }
